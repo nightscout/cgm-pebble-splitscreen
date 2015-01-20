@@ -1,0 +1,83 @@
+{
+    "resources": {
+        "media": [
+            {
+                "name": "IMAGE_NONE",
+                "file": "images/none.png",
+                "type": "png"
+            },
+            {
+                "name": "IMAGE_DOWN45",
+                "file": "images/down45.png",
+                "type": "png"
+            },
+            {
+                "name": "IMAGE_DOWNDOWN",
+                "file": "images/downdown.png",
+                "type": "png"
+            },
+            {
+                "name": "IMAGE_DOWN",
+                "file": "images/down.png",
+                "type": "png"
+            },
+            {
+                "name": "IMAGE_FLAT",
+                "file": "images/flat.png",
+                "type": "png"
+            },
+            {
+                "name": "IMAGE_UP45",
+                "file": "images/up45.png",
+                "type": "png"
+            },
+            {
+                "name": "IMAGE_UPUP",
+                "file": "images/upup.png",
+                "type": "png"
+            },
+            {
+                "name": "IMAGE_UP",
+                "file": "images/up.png",
+                "type": "png"
+            },
+            {
+                "menuIcon": true,
+                "name": "IMAGE_MENU_ICON",
+                "file": "images/logo.png",
+                "type": "png"
+            }
+            
+  ]
+        
+    },
+    "longName": "CGM",
+    "appKeys": {
+        "bg": 1,
+        "icon": 0,
+        "icon2":7,
+        "bg2": 4,
+        "alert": 3,
+        "readtime": 2,
+        "delta": 5,
+        "readtime2":6,
+        "delta2":8
+    },
+    "watchapp": {
+        "watchface": true
+    },
+       "capabilities": [
+        "configurable"
+    ],
+    "versionLabel": "1",
+     "versionLabel": "1.0",
+    "shortName": "Nightscout_Splitscreen",
+     "longName": "NIGHTSCOUT",
+       "projectType": "native",
+    "companyName": "Nightscout Contributors",
+    "capabilities": [
+        ""
+    ],
+    "versionCode": 2,
+    "uuid": "a4e66a45-f30d-4a13-9f0f-59343c6b23a9"
+}
