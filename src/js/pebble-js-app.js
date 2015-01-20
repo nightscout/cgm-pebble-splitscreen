@@ -43,9 +43,9 @@ function fetchCgmData(lastReadTime, lastBG) {
 
     var response;
     var req = new XMLHttpRequest();
-    req.open('GET', "http://104.131.134.170/pebble", true);
+    req.open('GET', "First Data Endpoint", true); //edit name below in message
     var req2 = new XMLHttpRequest();
-    req2.open('GET', "http://104.131.134.170:8080/pebble", true);
+    req2.open('GET', "Second data endpoint", true); // edit name below in message 
 
     req.onload = function(e) {
         console.log(req.readyState);
@@ -112,11 +112,11 @@ function fetchCgmData(lastReadTime, lastBG) {
                         bg: currentBG,
                         readtime: formatDate(new Date(bgs[0].datetime)),
                         icon: currentTrend,
-                        delta: battery + " Parker " + currentDelta,
+                        delta: battery + " FIRSTNAME " + currentDelta,
                         icon2: DIRECTIONS(response2.bgs[0].direction),
                         bg2: response2.bgs[0].sgv,
                         readtime2: formatDate(new Date(response2.bgs[0].datetime)),
-                        delta2: battery2 + " Madison " + response2.bgs[0].bgdelta
+                        delta2: battery2 + " SECONDNAME " + response2.bgs[0].bgdelta
 
                     };
 
