@@ -1,4 +1,6 @@
 # cgm-pebble-splitscreen
+
+[![Join the chat at https://gitter.im/nightscout/cgm-pebble-splitscreen](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/nightscout/cgm-pebble-splitscreen?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 Pebble app to view data from two nightscout servers.
 
 Steps to get it running on your own :
