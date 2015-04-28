@@ -14,10 +14,6 @@ Steps to get it running on your own :
         46: First pebble URL (Should begin with http or https )
 
         48:Second pebble URL
-        
-        115: First Name
-        
-        119: Second Name 
 
 4.Save changes , go to compilation and build the app.
 
