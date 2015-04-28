@@ -159,7 +159,7 @@ function fetchCgmData(lastReadTime, lastBG) {
                     if (parseInt(response2.bgs[0].bgdelta) >= 0)
                         response2.bgs[0].bgdelta = "+" + response2.bgs[0].bgdelta;
                     var currentBG2= response2.bgs[0].sgv;
-                      var currentConvBG2 = currentBG;
+                      var currentConvBG2 = currentBG2;
                 var  specialValue2 = false;
                    var responsecals2 = response2.cals;
                     
