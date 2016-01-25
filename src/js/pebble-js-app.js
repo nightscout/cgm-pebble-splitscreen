@@ -3,6 +3,21 @@ var TIME_15_MINS = 15 * 60 * 1000,
 
 var lastAlert = 0;
 
+
+// adding configuration screen for the units, secret key, web URL and Pebble name
+Pebble.addEventListener("showConfiguration", function(e) {
+                        console.log("Showing Configuration", JSON.stringify(e));
+                        Pebble.openURL('http://cgminthecloud.github.io/cgm-pebble-splitscreen/config_split_1.html');
+                        });
+
+Pebble.addEventListener("webviewclosed", function(e) {
+                        var opts = JSON.parse(decodeURIComponent(e.response));
+                        console.log("CLOSE CONFIG OPTIONS = " + JSON.stringify(opts));
+                        // store configuration in local storage
+                        localStorage.setItem('splitCGMPebble', JSON.stringify(opts));   
+//                        Pebble.sendAppMessage({ BG_UNITS: opts.units});
+                        });
+
 function DIRECTIONS(direction) {
     switch (direction) {
 
@@ -43,9 +58,13 @@ function fetchCgmData(lastReadTime, lastBG) {
 
     var response;
     var req = new XMLHttpRequest();
-    req.open('GET', "First Data Endpoint", true); //edit name below in message
+    
+    var opts = [ ].slice.call(arguments).pop( );
+    opts = JSON.parse(localStorage.getItem('splitCGMPebble'));
+  
+    req.open('GET', opts.endpoint1, true); //edit name below in message
     var req2 = new XMLHttpRequest();
-    req2.open('GET', "Second data endpoint", true); // edit name below in message 
+    req2.open('GET', opts.endpoint2, true); // edit name below in message 
 
     req.onload = function(e) {
         console.log(req.readyState);
@@ -112,11 +131,11 @@ function fetchCgmData(lastReadTime, lastBG) {
                         bg: currentBG,
                         readtime: formatDate(new Date(bgs[0].datetime)),
                         icon: currentTrend,
-                        delta: battery + " FIRSTNAME " + currentDelta,
+                        delta: battery + " " + opts.name1 + " " + currentDelta,
                         icon2: DIRECTIONS(response2.bgs[0].direction),
                         bg2: response2.bgs[0].sgv,
                         readtime2: formatDate(new Date(response2.bgs[0].datetime)),
-                        delta2: battery2 + " SECONDNAME " + response2.bgs[0].bgdelta
+                        delta2: battery2 + " " + opts.name2 + " " + response2.bgs[0].bgdelta
 
                     };
 
@@ -170,7 +189,32 @@ function formatDate(date) {
 Pebble.addEventListener("ready",
     function(e) {
         console.log("connect: " + e.ready);
-        //fetchCgmData(0, 0);
+
+      // check for configuration data
+      var message;
+      //get options from configuration window
+  
+      var opts = [ ].slice.call(arguments).pop( );
+      opts = JSON.parse(localStorage.getItem('splitCGMPebble'));
+  
+  	  // check if endpoint exists
+      if (!opts.endpoint1) {
+          // endpoint doesn't exist, return no endpoint to watch
+  		// " " (space) shows these are init values, not bad or null values
+          message = {
+            endpoint1: " ",
+            name1: " ",
+            endpoint2: " ",
+//            units: " ",
+            name2: " ",
+          };
+          
+          console.log("NO ENDPOINT JS message", JSON.stringify(message));
+          Pebble.sendAppMessage(JSON.stringify(message));
+          return;   
+      }
+        
+      //fetchCgmData(0, 0);
     });
 
 Pebble.addEventListener("appmessage",
