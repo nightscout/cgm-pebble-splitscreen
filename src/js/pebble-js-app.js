@@ -189,11 +189,11 @@ function fetchCgmData(lastReadTime, lastBG) {
                         bg: currentBG,
                         readtime: formatDate(new Date(response.bgs[0].datetime)),
                         icon: currentTrend,
-                        delta: battery + " " + opts.name1 + " " + currentDelta + unit_text[unit_index],
+                        delta: battery + " " + opts.name1 + " " + currentDelta,
                         icon2: currentTrend2,
                         bg2: currentBG2,
                         readtime2: formatDate(new Date(response2.bgs[0].datetime)),
-                        delta2: battery2 + " " + opts.name2 + " " + currentDelta2 + unit_text[unit_index]
+                        delta2: battery2 + " " + opts.name2 + " " + currentDelta2
                     };
 
                     console.log("message: " + JSON.stringify(message));
