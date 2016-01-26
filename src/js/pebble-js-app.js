@@ -3,6 +3,41 @@ var TIME_15_MINS = 15 * 60 * 1000,
 
 var lastAlert = 0;
 
+// Defined to create the array which contains mg/dL values as well as mmol values (and text)
+var unit_index = 2;  // set it out of range
+var unit_index_mgdl = 0;
+var unit_index_mmol = 1;
+
+// arrays for each BG unit
+// Kate - you'll need to comment on what each of the 9 levels represents.  I just moved them into a 2D array for indexing in the if/then/else below. - ML
+var BG_levels = [[55, 3.0], [60, 3.3], [70, 4.0], [120, 6.6], [100,5.5], [120, 6.6], [180,10.0], [250,14.0], [300, 16.0]];
+var unit_text = ["mg/dL", "mmol"];
+
+				
+// adding configuration screen for the units, secret key, web URL and Pebble name
+Pebble.addEventListener("showConfiguration", function(e) {
+                          console.log("Showing Configuration", JSON.stringify(e));
+                          Pebble.openURL('http://cgminthecloud.github.io/cgm-pebble-splitscreen/config_split_1.html');
+                        });
+
+Pebble.addEventListener("webviewclosed", function(e) {
+                          var opts = JSON.parse(decodeURIComponent(e.response));
+                          console.log("CLOSE CONFIG OPTIONS = " + JSON.stringify(opts));
+                          // store configuration in local storage
+                          localStorage.setItem('splitCGMPebble', JSON.stringify(opts));   
+                          
+                          // set the index used for the unit BG array.
+                          if (opts.units == "mgdl") {
+                            unit_index = unit_index_mgdl;
+//                            console.log("Unit Set - mg/dL - unit_index = " + unit_index);
+                          }
+                          else {
+                            unit_index = unit_index_mmol;
+//                            console.log("Unit Set - mmol - unit_index = " + unit_index);
+                          }
+                      
+                        });
+
 function DIRECTIONS(direction) {
     switch (direction) {
 
@@ -43,98 +78,132 @@ function fetchCgmData(lastReadTime, lastBG) {
 
     var response;
     var req = new XMLHttpRequest();
-    req.open('GET', "First Data Endpoint", true); //edit name below in message
+    
+    var opts = [ ].slice.call(arguments).pop( );
+    opts = JSON.parse(localStorage.getItem('splitCGMPebble'));
+
+    // set the index used for the unit BG array.
+    if (opts.units == "mgdl") {
+      unit_index = unit_index_mgdl;
+    }
+    else {
+      unit_index = unit_index_mmol;
+    }
+  
+    req.open('GET', opts.endpoint1, true); //edit name below in message
     var req2 = new XMLHttpRequest();
-    req2.open('GET', "Second data endpoint", true); // edit name below in message 
+    req2.open('GET', opts.endpoint2, true); // edit name below in message 
 
     req.onload = function(e) {
-        console.log(req.readyState);
+//        console.log(req.readyState);
         if (req.readyState == 4) {
-            console.log(req.status);
+//            console.log(req.status);
             if (req.status == 200) {
-                console.log("status: " + req.status);
+//                console.log("status: " + req.status);
                 response = JSON.parse(req.responseText);
+                console.log ("Response: " + JSON.stringify(response));
 
-                var now = Date.now(),
-                    sinceLastAlert = now - lastAlert,
-                    alertValue = 0,
-                    bgs = response.bgs,
-                    currentBG = bgs[0].sgv,
-                    currentDelta = bgs[0].bgdelta,
-                    currentTrend = DIRECTIONS(bgs[0].direction),
+              // load response 2 early to do the full side by side comparison and loads
+              req2.onload = function(o) {
+                    var response2 = JSON.parse(req2.responseText);
+                    console.log ("Response2: " + JSON.stringify(response2));
+              
+                    // top level variables
+                    var alertValue = 0;
+                    var sinceLastAlert = Date.now() - lastAlert;
 
-                    delta = "Change: " + currentDelta + "mg/dL";
-                var battery = bgs[0].battery;
-                if (battery == undefined || battery == null)
-                    battery = "";
-                else battery = battery + "%";
+                    // variables for response 1
+                    var currentBG = response.bgs[0].sgv;
+                    var currentDelta = response.bgs[0].bgdelta;
+                    var currentTrend = DIRECTIONS(response.bgs[0].direction);
+                    var battery = response.bgs[0].battery;
 
-                if (parseInt(currentDelta) >= 0)
+                    // variables for response 2
+                    var currentBG2 = response2.bgs[0].sgv;
+                    var currentDelta2 = response2.bgs[0].bgdelta;
+                    var currentTrend2 = DIRECTIONS(response2.bgs[0].direction);
+                    var battery2 = response2.bgs[0].battery;
+ 
+                // add the + in front of the delta if it's above 0.
+                if (currentDelta >= 0)
                     currentDelta = "+" + currentDelta;
 
+                if (currentDelta2 >= 0)
+                  currentDelta2 = "+" + currentDelta2;
 
-                if (currentBG < 55)
+                // prime alerts with response 1 and then override if higher with response 2
+                if (currentBG < BG_levels[0][unit_index])
                     alertValue = 2;
-                else if (currentBG < 60 && currentDelta < 0)
+                else if (currentBG < BG_levels[1][unit_index] && currentDelta < 0)
                     alertValue = 2;
-                else if (currentBG < 70 && sinceLastAlert > TIME_15_MINS)
+                else if (currentBG < BG_levels[2][unit_index] && sinceLastAlert > TIME_15_MINS)
                     alertValue = 2;
-                else if (currentBG < 120 && currentTrend == 7) //DBL_DOWN
+                else if (currentBG < BG_levels[3][unit_index] && currentTrend == 7) //DBL_DOWN
                     alertValue = 2;
-                else if (currentBG == 100 && currentTrend !== 0) //PERFECT SCORE
+                else if (currentBG == BG_levels[4][unit_index] && currentTrend !== 0) //PERFECT SCORE
                     alertValue = 1;
-                else if (currentBG > 120 && currentTrend == 1) //DBL_UP
+                else if (currentBG > BG_levels[5][unit_index] && currentTrend == 1) //DBL_UP
                     alertValue = 3;
-                else if (currentBG > 200 && sinceLastAlert > TIME_30_MINS && currentDelta > 0)
+                else if (currentBG > BG_levels[6][unit_index] && sinceLastAlert > TIME_30_MINS && currentDelta > 0)
                     alertValue = 3;
-                else if (currentBG > 250 && sinceLastAlert > TIME_30_MINS)
+                else if (currentBG > BG_levels[7][unit_index] && sinceLastAlert > TIME_30_MINS)
                     alertValue = 3;
-                else if (currentBG > 300 && sinceLastAlert > TIME_15_MINS)
+                else if (currentBG > BG_levels[8][unit_index] && sinceLastAlert > TIME_15_MINS)
+                    alertValue = 3;
+                else
+                    alertValue = 0;
+
+                // over ride with 2 if higher
+                if (currentBG2 < BG_levels[0][unit_index] && alertValue < 2)
+                    alertValue = 2;
+                else if (currentBG2 < BG_levels[1][unit_index] && currentDelta2 < 0 && alertValue < 2)
+                    alertValue = 2;
+                else if (currentBG2 < BG_levels[2][unit_index] && sinceLastAlert > TIME_15_MINS && alertValue < 2)
+                    alertValue = 2;
+                else if (currentBG2 < BG_levels[3][unit_index] && currentTrend2 == 7 && alertValue < 2) //DBL_DOWN
+                    alertValue = 2;
+                else if (currentBG2 == BG_levels[4][unit_index] && currentTrend2 !== 0 && alertValue < 1) //PERFECT SCORE
+                    alertValue = 1;
+                else if (currentBG2 > BG_levels[5][unit_index] && currentTrend2 == 1 && alertValue < 3) //DBL_UP
+                    alertValue = 3;
+                else if (currentBG2 > BG_levels[6][unit_index] && sinceLastAlert > TIME_30_MINS && currentDelta2 > 0 && alertValue < 3)
+                    alertValue = 3;
+                else if (currentBG2 > BG_levels[7][unit_index] && sinceLastAlert > TIME_30_MINS && alertValue < 3)
+                    alertValue = 3;
+                else if (currentBG2 > BG_levels[8][unit_index] && sinceLastAlert > TIME_15_MINS && alertValue < 3)
                     alertValue = 3;
 
                 if (alertValue > 0) {
-                    lastAlert = now;
+                    lastAlert = Date.now();
                 }
-
-
-                req2.onload = function(o) {
-                    var response2 = JSON.parse(req2.responseText);
-                    var battery2 = response2.bgs[0].battery;
+                  if (battery == undefined || battery == null)
+                      battery = "";
+                  else battery = battery + "%";
+  
                     if (battery2 == undefined || battery2 == null)
                         battery2 = "";
                     else battery2 = battery2 + "%";
-
-                    if (parseInt(response2.bgs[0].bgdelta) >= 0)
-                        response2.bgs[0].bgdelta = "+" + response2.bgs[0].bgdelta;
-
+                    
                     var message = {
                         alert: alertValue,
                         bg: currentBG,
-                        readtime: formatDate(new Date(bgs[0].datetime)),
+                        readtime: formatDate(new Date(response.bgs[0].datetime)),
                         icon: currentTrend,
-                        delta: battery + " FIRSTNAME " + currentDelta,
-                        icon2: DIRECTIONS(response2.bgs[0].direction),
-                        bg2: response2.bgs[0].sgv,
+                        delta: battery + " " + opts.name1 + " " + currentDelta,
+                        icon2: currentTrend2,
+                        bg2: currentBG2,
                         readtime2: formatDate(new Date(response2.bgs[0].datetime)),
-                        delta2: battery2 + " SECONDNAME " + response2.bgs[0].bgdelta
-
+                        delta2: battery2 + " " + opts.name2 + " " + currentDelta2
                     };
 
                     console.log("message: " + JSON.stringify(message));
                     Pebble.sendAppMessage(message);
-
-
-
                 };
-
                 req2.send(null);
-
-
             }
         }
     };
     req.send(null);
-
 }
 
 function timeAgo(offset) {
@@ -156,9 +225,7 @@ function timeAgo(offset) {
         return span.join(' ') + ' ago';
     else
         return span[0];
-
 }
-
 
 function formatDate(date) {
 
@@ -170,7 +237,31 @@ function formatDate(date) {
 Pebble.addEventListener("ready",
     function(e) {
         console.log("connect: " + e.ready);
-        //fetchCgmData(0, 0);
+
+      // check for configuration data
+      var message;
+      //get options from configuration window
+  
+      var opts = [ ].slice.call(arguments).pop( );
+      opts = JSON.parse(localStorage.getItem('splitCGMPebble'));
+  
+  	  // check if endpoint exists
+      if (!opts.endpoint1) {
+          // endpoint doesn't exist, return no endpoint to watch
+  		// " " (space) shows these are init values, not bad or null values
+          message = {
+            endpoint1: " ",
+            name1: " ",
+            endpoint2: " ",
+            units: " ",
+            name2: " ",
+          };
+          
+          console.log("NO ENDPOINT JS message", JSON.stringify(message));
+          Pebble.sendAppMessage(JSON.stringify(message));
+          return;   
+      }
+	  
     });
 
 Pebble.addEventListener("appmessage",
